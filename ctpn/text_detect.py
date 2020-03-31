@@ -22,8 +22,10 @@ def load_tf_model():
     cfg.TEST.checkpoints_path = './ctpn/checkpoints'
 
     # init session
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
     config = tf.ConfigProto(allow_soft_placement=True, gpu_options=gpu_options)
+    
+
     sess = tf.Session(config=config)
 
     # load network

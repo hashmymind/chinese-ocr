@@ -22,39 +22,82 @@ class resizeNormalize(object):
 
     def __call__(self, img):
         img = img.resize(self.size, self.interpolation)
+        #img.show()
         img = self.toTensor(img)
         img.sub_(0.5).div_(0.5)
         return img
 
 
 def decode(preds,char_set):
-    pred_text = ''
-    for i in range(len(preds)):
-        if preds[i] != 0 and ((i == 0) or (i != 0 and preds[i] != preds[i-1])):
-            pred_text += char_set[int(preds[i])-1]
+  s = ""
+  #print(preds)
+  for i in range(len(preds)):
 
-    return pred_text
+    if preds[i] != 0 and ((i == 0) or (i != 0 and preds[i] != preds[i-1])):
+      s += char_set[preds[i]]
+  return s
+def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+    # initialize the dimensions of the image to be resized and
+    # grab the image size
+    dim = None
+    (h, w) = image.shape[:2]
 
+    # if both the width and height are None, then return the
+    # original image
+    if width is None and height is None:
+        return image
+
+    # check to see if the width is None
+    if width is None:
+        # calculate the ratio of the height and construct the
+        # dimensions
+        r = height / float(h)
+        dim = (int(w * r), height)
+
+    # otherwise, the height is None
+    else:
+        # calculate the ratio of the width and construct the
+        # dimensions
+        r = width / float(w)
+        dim = (width, int(h * r))
+
+    # resize the image
+    resized = cv2.resize(image, dim, interpolation = inter)
+
+    # return the resized image
+    return resized
 def predict(img,model,char_set):
 
     # image = Image.open(imagepath).convert('L')
+    '''
     (w, h) = img.size
     size_h = 32
     ratio = size_h / float(h)
     size_w = int(w * ratio)
+    '''
     # keep the ratio
-    transform = resizeNormalize((size_w, size_h))
-    image = transform(img)
-    image = image.unsqueeze(0)
+    #transform = resizeNormalize((size_w, size_h))
+    #image = transform(img)
+    #image = image.unsqueeze(0)
+    # resize
+
+    img = image_resize(img, height = 32)
+    img = np.expand_dims(img, axis=0)
+    img = np.expand_dims(img, axis=0)
+    img = torch.from_numpy(img)
+    img = img.type(torch.FloatTensor)
+    img.sub_(0.5).div_(0.5)
+    print(img.shape)
     if torch.cuda.is_available and use_gpu:
-        image = image.cuda()
+        image = img.cuda()
     model.eval()
     preds = model(image)
     preds = preds.max(2)[1]
     # print(preds)
-    preds = preds.squeeze()
+    #preds = preds.squeeze()
+    preds = preds.transpose(1,0).contiguous().view(-1)
     pred_text = decode(preds,char_set)
-    # print('predict == >', pred_text)
+    print('predict == >', pred_text)
     return pred_text
 
 def sort_box(box):
@@ -91,12 +134,13 @@ def charRec(img, text_recs, adjust=False):
    xDim, yDim = img.shape[1], img.shape[0]
 
    modelpath = './train/models/pytorch-crnn.pth'
-   char_set = open('./train/char_std_5990.txt', 'r', encoding='utf-8').readlines()
+   char_set = open('./train/char_std.txt', 'r', encoding='utf-8').readlines()
    char_set = ''.join([ch.strip('\n') for ch in char_set[1:]] + ['卍'])
    n_class = len(char_set)
    model = crnn.CRNN(32, 1, n_class, 256)
 
    if torch.cuda.is_available and use_gpu:
+       torch.cuda.empty_cache()
        model = model.cuda()
 
    if os.path.exists(modelpath):
@@ -126,9 +170,10 @@ def charRec(img, text_recs, adjust=False):
 
        if partImg.shape[0] < 1 or partImg.shape[1] < 1 or partImg.shape[0] > partImg.shape[1]:  # 过滤异常图片
            continue
-
-       image = Image.fromarray(partImg).convert('L')
-       text = predict(image, model, char_set)
+       if len(partImg.shape) == 3:
+          partImg = cv2.cvtColor(partImg, cv2.COLOR_BGR2GRAY)
+          #partImg = np.expand_dims(partImg, axis=0)
+       text = predict(partImg, model, char_set)
        
        if len(text) > 0:
            results[index] = [rec]
@@ -136,7 +181,7 @@ def charRec(img, text_recs, adjust=False):
  
    return results
 
-def model(img, adjust=False):
+def model(img, adjust=True):
     """
     @img: 图片
     """

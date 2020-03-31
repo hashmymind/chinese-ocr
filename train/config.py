@@ -1,18 +1,16 @@
 class DefaultConfig(object):
-	train_data_root = '/home/DataSet/data_train.txt'
-	validation_data_root = '/home/DataSet/data_test.txt'
-	modelpath = '/home/chineseocr/train/models/pytorch-crnn.pth'
-	image_path = '/home/DataSet/images'
+	epoch_size = 1000000
+	modelpath = 'D:/chinese-ocr/train/models/pytorch-crnn.pth'
 
-	batch_size = 64
+	batch_size =4
 	img_h = 32
-	num_workers = 4
+	num_workers = 0
 	use_gpu = True
 	max_epoch = 10
-	learning_rate = 0.0005
-	weight_decay = 1e-4
-	printinterval = 200
-	valinterval = 1000
+	learning_rate = 2*(1e-4)
+	weight_decay = 5*(1e-5)
+	printinterval = 500
+	valinterval = 6000
 
 def parse(self,**kwargs):
 	for k,v in kwargs.items():

@@ -1,3 +1,4 @@
+# <<OK!>> #
 import time
 class Timer(object):
     def __init__(self):
@@ -10,7 +11,7 @@ class Timer(object):
     def tic(self):
         self.start_time = time.time()
 
-    def toc(self, average=True):
+    def toc(self, average = True):
         self.diff = time.time() - self.start_time
         self.total_time += self.diff
         self.calls += 1
@@ -19,3 +20,4 @@ class Timer(object):
             return self.average_time
         else:
             return self.diff
+# <<OK!>> #

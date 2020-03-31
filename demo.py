@@ -21,7 +21,7 @@ if __name__ == '__main__':
         image = np.array(Image.open(image_file).convert('RGB'))
         t = time.time()
         result, image_framed = ocr.model(image)
-        output_file = os.path.join(result_dir, image_file.split('/')[-1])
+        output_file = os.path.join(result_dir, image_file.split('\\')[-1])
         Image.fromarray(image_framed).save(output_file)
         print("Mission complete, it took {:.3f}s".format(time.time() - t))
         print("\nRecognition Result:\n")
